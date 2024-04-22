@@ -1,7 +1,6 @@
 import { cuvalCards } from "./lib.ts";
 
 let cards = cuvalCards();
-// const view = renderCli(cuvalCards());
 
 Deno.serve((request) => {
   const url = new URL(request.url);
@@ -15,11 +14,7 @@ Deno.serve((request) => {
 
   for (let i = 0; i < 6; i++) {
     if (pathname === `/${i + 1}`) {
-      return new Response(
-        `
-pathname is ${pathname}
-Your Card is ` + cards[i],
-      );
+      return new Response(`Your Card is ` + cards[i]);
     }
   }
 
