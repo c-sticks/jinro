@@ -12,5 +12,5 @@ Deno.test("cuvalCards v", () => {
 
   assertEquals(cards.filter((c) => c === "prophet").length, 1);
   assertEquals(cards.filter((c) => c === "manwolf").length, 2);
-  assertEquals(cards.filter((c) => c === "prophet").length, 3);
+  assertEquals(cards.filter((c) => c === "villeger").length, 3);
 });
