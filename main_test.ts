@@ -2,7 +2,7 @@ import {
   assertEquals,
   assertNotEquals,
 } from "https://deno.land/std/assert/mod.ts";
-import { cuvalCards } from "./main.ts";
+import { cuvalCards } from "./lib.ts";
 
 Deno.test("cuvalCards length", () => {
   const cards = cuvalCards();
