@@ -9,15 +9,24 @@ if (cards.length === 6) {
 }
 
 let sum_prophet = 0;
+let sum_villeger = 0;
+
 for (const card of cards) {
-  if (
-    card === "prophet"
-  ) {
+  if (card === "prophet") {
     sum_prophet++;
+  }
+  if (card === "villeger") {
+    sum_villeger++;
   }
 }
 
 if (sum_prophet === 1) {
+  console.log("Test passed");
+} else {
+  console.log("Test failed");
+}
+
+if (sum_villeger === 3) {
   console.log("Test passed");
 } else {
   console.log("Test failed");

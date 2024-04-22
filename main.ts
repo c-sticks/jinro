@@ -1,3 +1,3 @@
 export function cuvalCardd(): string[] {
-  return ["a","a","a","a","a","a"];
+  return ["prophet","a","a","a","a","a"];
 }
