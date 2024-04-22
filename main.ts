@@ -1,3 +1,3 @@
-export function cuvalCardd(): string[] {
-  return ["prophet","villeger","villeger","villeger","manwolf","manwolf"];
+export function cuvalCards(): string[] {
+  return ["prophet", "prophet", "villeger", "villeger", "manwolf", "manwolf"];
 }

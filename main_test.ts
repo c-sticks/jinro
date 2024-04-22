@@ -1,41 +1,16 @@
-import { cuvalCardd } from "./main.ts";
+import { assertEquals } from "https://deno.land/std/assert/mod.ts";
+import { cuvalCards } from "./main.ts";
 
-const cards = cuvalCardd();
+Deno.test("cuvalCards length", () => {
+  const cards = cuvalCards();
 
-if (cards.length === 6) {
-  console.log("Test passed");
-} else {
-  console.log("Test failed");
-}
+  assertEquals(cards.length, 6);
+});
 
-let sum_prophet = 0;
-let sum_villeger = 0;
-let sum_manwolf = 0;
-for (const card of cards) {
-  if (card === "prophet") {
-    sum_prophet++;
-  }
-  if (card === "villeger") {
-    sum_villeger++;
-  }
-  if (card === "manwolf") {
-    sum_manwolf++;
-  }
-}
+Deno.test("cuvalCards v", () => {
+  const cards = cuvalCards();
 
-if (sum_prophet === 1) {
-  console.log("Test passed");
-} else {
-  console.log("Test failed");
-}
-
-if (sum_villeger === 3) {
-  console.log("Test passed");
-} else {
-  console.log("Test failed");
-}
-if (sum_manwolf === 2) {
-  console.log("Test passed");
-} else {
-  console.log("Test failed");
-}
+  assertEquals(cards.filter((c) => c === "prophet").length, 1);
+  assertEquals(cards.filter((c) => c === "manwolf").length, 2);
+  assertEquals(cards.filter((c) => c === "prophet").length, 3);
+});
