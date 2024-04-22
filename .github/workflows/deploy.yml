@@ -1,142 +1,34 @@
-name: check
-
+name: Deploy
 on:
+  push:
+    branches: main
   pull_request:
-    branches:
-      - "main"
-      - "demo*"
-      - "std*"
-
-permissions:
-  contents: read
-  issues: write
-  pull-requests: write
+    branches: main
 
 jobs:
-  check:
+  deploy:
+    name: Deploy
     runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write # Needed for auth with Deno Deploy
+      contents: read # Needed to clone the repository
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-deno
-      - run: echo "::add-matcher::.github/problem-matcher/deno-check-matcher.json"
-      - run: deno task check:all --github-actions
-      - run: echo "::remove-matcher owner=deno-check::"
-      - run: deno task build:ec
-      - run: deno task build:erp
-      - run: deno task build:storybook
+      - name: Clone repository
+        uses: actions/checkout@v4
 
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-deno
-      - uses: ./.github/actions/load-envrc
+      - name: Install Deno
+        uses: denoland/setup-deno@v1
         with:
-          path: ./env/.envrc.test
-      - run: deno task compose:up
-      - uses: ./.github/actions/wait-db
-      - run: deno task db:dev:migrate
-      - run: deno task test
+          deno-version: v1.x
 
-  e2e-test-local:
-    runs-on: ubuntu-latest
-    env:
-      EC_WEB_PROTOCOL: "" # filled by load-envrc
-      EC_WEB_DOMAIN: "" # filled by load-envrc
-      ERP_WEB_PROTOCOL: "" # filled by load-envrc
-      ERP_WEB_DOMAIN: "" # filled by load-envrc
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-deno
-      - uses: ./.github/actions/load-envrc
-        with: { path: ./env/.envrc.test }
-      - run: deno task compose:up
-      - run: deno task build:ec
-      - run: deno task build:erp
-      - run: deno task build:storybook
-      - run: deno task dev:erp > /dev/null 2>&1 &
-      - run: deno task dev:ec > /dev/null 2>&1 &
-      - uses: browser-actions/setup-chrome@v1
-        id: setup-chrome
-      - uses: ./.github/actions/wait-db
-      - run: deno task db:dev:migrate
-      - name: wait ec
-        uses: ./.github/actions/wait-http
-        with: { url: "${{ env.EC_WEB_PROTOCOL }}://${{ env.EC_WEB_DOMAIN }}" }
-      - name: wait erp
-        uses: ./.github/actions/wait-http
-        with: { url: "${{ env.ERP_WEB_PROTOCOL }}://${{ env.ERP_WEB_DOMAIN }}" }
-      - uses: ./.github/actions/setup-e2e-test
+      - name: Build step
+        run: "deno test"
+
+      - name: Upload to Deno Deploy
+        uses: denoland/deployctl@v1
         with:
-          email: "test-vendor@example.com"
-          password: "password"
-      - run: deno task test:e2e
-        id: test_step
-        env:
-          BROWSER_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
-          TEST_VENDOR_EMAIL: "test-vendor@example.com"
-          TEST_VENDOR_PASS: "password"
-          TEST_NEW_CUSTOMER_A_USER_1_EMAIL: "test-customerA1@example.com"
-          TEST_NEW_CUSTOMER_A_USER_2_EMAIL: "test-customerA2@example.com"
-          TEST_NEW_CUSTOMER_B_USER_1_EMAIL: "test-customerB1@example.com"
-          TEST_NEW_CUSTOMER_B_USER_2_EMAIL: "test-customerB2@example.com"
-          TEST_NEW_CUSTOMER_USER_PASS: "password"
-          LANG: ja_JP.UTF-8
-      - name: "Upload test reports"
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: e2e-test-local-reports
-          path: test_reports
-          retention-days: 3
-
-  coments-todo:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-deno
-
-      - name: files
-        run: |
-          grep -Ilr '.' -e 'TODO' --exclude-dir='.git' --exclude-dir='.github' \
-            | grep -v 'todo' \
-            | grep -v 'TODO' \
-            | sed 's/^\.\///g' >> TODO_FILES
-
-      - uses: ./.github/actions/deno-script
-        id: parse
-        with:
-          options: --allow-read --allow-env
-          script: |
-            let files = Deno.readTextFileSync('TODO_FILES').split('\n').filter(f => f);
-            const todos = files.flatMap(file => {
-              const txt = Deno.readTextFileSync(file.trim());
-              const lines = txt.split('\n');
-              const size = lines.length - 1;
-              return lines.map((l, num) => l.includes('TODO') ? num : null)
-                .filter(l => l != null)
-                .map((num) => ({ file, range: [num+1, Math.min(num+5, size)] }));
-            });
-            const base = [
-              Deno.env.get('GITHUB_SERVER_URL'),
-              Deno.env.get('GITHUB_REPOSITORY'),
-              'blob',
-              Deno.env.get('GITHUB_SHA')
-            ].join('/');
-            const links = todos.map(t => `${base}/${t.file}#L${t.range[0]}-L${t.range[1]}`)
-              .map(e => encodeURI(e))
-            if (links.length !== 0) {
-              console.log(`:white_check_mark: Todo Found! ${links.join(' ')}`);
-            }
-
-      - uses: actions/github-script@v7
-        if: ${{ steps.parse.outputs.stdout }}
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `${{ steps.parse.outputs.stdout }}`
-            })
+          project: "hw104-jinro-44"
+          entrypoint: "main.ts"
+          root: ""
